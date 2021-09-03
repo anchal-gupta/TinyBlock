@@ -2,6 +2,7 @@
 const { app, BrowserWindow, Menu } = require('electron')
 const path = require('path')
 const shell = require('electron').shell
+const { autoUpdater } = require('electron-updater');
 
 function createWindow () {
   // Create the browser window.
@@ -12,6 +13,17 @@ function createWindow () {
       preload: path.join(__dirname, 'preload.js')
     }
   })
+
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+
+  autoUpdater.on('update-available', () => {
+    mainWindow.webContents.send('update_available');
+  });
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update_downloaded');
+  });
 
   // and load the index.html of the app.
   mainWindow.loadFile('src/index.html')
@@ -67,3 +79,7 @@ app.on('window-all-closed', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
+});
